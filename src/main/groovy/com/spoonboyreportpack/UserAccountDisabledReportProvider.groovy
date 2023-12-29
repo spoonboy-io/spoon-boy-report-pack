@@ -10,6 +10,11 @@ import com.morpheusdata.response.ServiceResponse
 import com.morpheusdata.views.HTMLResponse
 import com.morpheusdata.views.ViewModel
 
+import groovy.sql.GroovyRowResult
+import groovy.sql.Sql
+import java.sql.Connection
+import io.reactivex.rxjava3.core.Observable
+
 class UserAccountDisabledReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
 	protected Plugin plugin
