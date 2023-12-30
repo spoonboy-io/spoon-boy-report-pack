@@ -7,8 +7,8 @@ This report pack is built for the post v1.0 plugin framework so requires Morpheu
 ### User Reports
 
 - 2FA Status Report
-- Account Locked Report (WIP)
-- Account Disabled Report (WIP)
+- Account Locked Report
+- Account Disabled Report
 - Password Expired Report (WIP)
 - VM Credential Status Report (WIP)
 - Logged in Users Report (WIP)
