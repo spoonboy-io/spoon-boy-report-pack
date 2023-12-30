@@ -32,9 +32,6 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.setAuthor("Ollie Phillips")
 
         // user reports
-        // logged in users
-        //this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
-
         // 2FA status
         this.registerProvider(new User2FAStatusReportProvider(this,this.morpheus))
 
@@ -52,6 +49,9 @@ class SpoonBoyReportPackPlugin extends Plugin {
 
         // failed logins
         //this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
+
+        // logged in users
+        //this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
 
 
         // role reports

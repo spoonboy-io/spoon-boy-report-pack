@@ -66,7 +66,7 @@
             {{#each main}}
                 <tr>
                     <td>{{dataMap.username}}</td>
-                    <td>{{dataMap.email}}</td>
+                    <td><a href="mailto:{{dataMap.email}}">{{dataMap.email}}</a></td>
                     <td>{{dataMap.created}}</td>
                     <td>{{dataMap.is2FA}}</td>
                 </tr>
