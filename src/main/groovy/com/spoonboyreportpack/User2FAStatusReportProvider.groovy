@@ -85,7 +85,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
             dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
         	def accountName = reportResult.getAccount().getName()
 
-        	repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, if(is_using2fa, 'YES', 'NO') 'is2fa' from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id order by is_using2fa desc, u.date_created")
+        	repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, if(is_using2fa, 'YES', 'NO') 'is2fa' from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id order by is_using2fa desc, u.date_created desc;")
 
         } finally {
             morpheus.report.releaseDatabaseConnection(dbConnection)

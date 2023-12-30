@@ -31,12 +31,9 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.setDescription("A suite of additional reports for Morpheus designed to address several real-world use cases")
         this.setAuthor("Ollie Phillips")
 
-        // report providers from here
-        // this.registerProvider(new SpoonBoyReportPackReportProvider(this,this.morpheus))
-
         // user reports
         // logged in users
-        this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
+        //this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
 
         // 2FA status
         this.registerProvider(new User2FAStatusReportProvider(this,this.morpheus))
@@ -54,12 +51,12 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.registerProvider(new UserVMCredentialsStatusReportProvider(this,this.morpheus))
 
         // failed logins
-        this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
+        //this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
 
 
         // role reports
         // assigned roles
-        this.registerProvider(new RoleAssignedRoleReportProvider(this,this.morpheus))
+        //this.registerProvider(new RoleAssignedRoleReportProvider(this,this.morpheus))
 
     }
 
