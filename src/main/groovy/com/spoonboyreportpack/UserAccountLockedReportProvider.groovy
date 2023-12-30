@@ -102,7 +102,7 @@ class UserAccountLockedReportProvider extends AbstractReportProvider{
                             email: resultRow.email,
                             created : resultRow.created,
                             lastLogin: resultRow.lastLogin,
-                            disabled : resultRow.locked
+                            locked : resultRow.locked
                     ]
 
                     // create summary metrics
