@@ -60,13 +60,6 @@ class SpoonBoyReportPackPlugin extends Plugin {
 
     }
 
-    @Override
-    public List<Permission> getPermissions() {
-    	// atm moment only one permission for all reports, we could make this more granular and add a permission for each report
-    	Permission permission = new Permission('Spoon Boy Report Pack', 'spoonBoyReportPack', [Permission.AccessType.none, Permission.AccessType.full])
-    	return [permission];
-    }
-
     /**
      * Called when a plugin is being removed from the plugin manager (aka Uninstalled)
      */
