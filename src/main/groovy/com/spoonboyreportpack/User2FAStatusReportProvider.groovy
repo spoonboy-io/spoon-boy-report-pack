@@ -123,15 +123,15 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
         			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
         		}
 
-                // prep header
-                Map<String,Object> headerData = [
-                    users: users,
-                    yes2FA: yes2FA,
-                    no2FA: no2FA
-                ]
+        // prep header
+        Map<String,Object> headerData = [
+            users: users,
+            yes2FA: yes2FA,
+            no2FA: no2FA
+        ]
 
-                ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
-                morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
+        ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
+        morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
 
 	}
 

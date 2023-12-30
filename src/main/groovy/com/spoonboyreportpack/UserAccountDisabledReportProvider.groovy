@@ -76,57 +76,57 @@ class UserAccountDisabledReportProvider extends AbstractReportProvider{
 		*/
 
 		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingGet();
-                Long displayOrder = 0
-                List<GroovyRowResult> repResults = []
+        Long displayOrder = 0
+        List<GroovyRowResult> repResults = []
 
-                Integer disabledUsers = 0
+        Integer disabledUsers = 0
 
-                Connection dbConnection
+        Connection dbConnection
 
-                try {
-                    dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
-                	def accountName = reportResult.getAccount().getName()
+        try {
+            dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
+            def accountName = reportResult.getAccount().getName()
 
-                	repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, DATE_FORMAT(u.last_login_date, '%D %M %Y') lastLogin, if(enabled, 'NO', 'YES') disabled from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 0 and a.id = u.account_id order by u.date_created desc;")
+            repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, DATE_FORMAT(u.last_login_date, '%D %M %Y') lastLogin, if(enabled, 'NO', 'YES') disabled from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 0 and a.id = u.account_id order by u.date_created desc;")
 
-                } finally {
-                    morpheus.report.releaseDatabaseConnection(dbConnection)
+        } finally {
+            morpheus.report.releaseDatabaseConnection(dbConnection)
+        }
+
+        Observable<GroovyRowResult> observable = Observable.fromIterable(repResults) as Observable<GroovyRowResult>
+                observable.map{ resultRow ->
+
+                    def Map<String,Object> data = [:]
+
+                    data = [
+                            username: resultRow.username,
+                            email: resultRow.email,
+                            created : resultRow.created,
+                            lastLogin: resultRow.lastLogin,
+                            disabled : resultRow.disabled
+                    ]
+
+                    // create summary metrics
+                    disabledUsers ++
+
+                    ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
+                    return resultRowRecord
+
+                }.buffer(50).doOnComplete {
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
+                }.doOnError { Throwable t ->
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
+                }.subscribe {resultRows ->
+                    morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
                 }
 
-                Observable<GroovyRowResult> observable = Observable.fromIterable(repResults) as Observable<GroovyRowResult>
-                		observable.map{ resultRow ->
+        // prep header
+        Map<String,Object> headerData = [
+            disabledUsers: disabledUsers
+        ]
 
-                		    def Map<String,Object> data = [:]
-
-                			data = [
-                			        username: resultRow.username,
-                			        email: resultRow.email,
-                					created : resultRow.created,
-                					lastLogin: resultRow.lastLogin,
-                					disabled : resultRow.disabled
-                			]
-
-                            // create summary metrics
-                			disabledUsers ++
-
-                			ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
-                			return resultRowRecord
-
-                		}.buffer(50).doOnComplete {
-                			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
-                		}.doOnError { Throwable t ->
-                			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
-                		}.subscribe {resultRows ->
-                			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
-                		}
-
-                        // prep header
-                        Map<String,Object> headerData = [
-                            disabledUsers: disabledUsers
-                        ]
-
-                        ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
-                        morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
+        ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
+        morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
 
 	}
 
