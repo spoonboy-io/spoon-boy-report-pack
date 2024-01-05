@@ -22,6 +22,7 @@ This report pack is built for the post v1.0 plugin framework so requires Morpheu
 - Active Policies Report
 - User Activity Report
 - Role > Group Overview Overview Report
+- Appliance setup/healthcheck type Report
 
 ## Contributing
 
