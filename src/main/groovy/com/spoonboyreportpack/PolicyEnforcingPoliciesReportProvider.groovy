@@ -19,10 +19,11 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
 	protected Plugin plugin
 
-	RoleAssignedRoleReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
+	PolicyEnforcingPoliciesReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
 		this.morpheusContext = morpheusContext
 		this.plugin = plugin
 	}
+
 	/**
 	 * Returns the Morpheus Context for interacting with data stored in the Main Morpheus Application
 	 *
