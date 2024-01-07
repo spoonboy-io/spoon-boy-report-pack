@@ -45,7 +45,7 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.registerProvider(new UserAccountLockedReportProvider(this,this.morpheus))
 
         // users VM credentials
-        this.registerProvider(new UserVMCredentialsStatusReportProvider(this,this.morpheus))
+        //this.registerProvider(new UserVMCredentialsStatusReportProvider(this,this.morpheus))
 
         // failed logins
         //this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
@@ -57,6 +57,13 @@ class SpoonBoyReportPackPlugin extends Plugin {
         // role reports
         // assigned roles
         //this.registerProvider(new RoleAssignedRoleReportProvider(this,this.morpheus))
+
+
+        // policy reports
+        // enforcing policies
+        //this.registerProvider(new PolicyEnforcingPoliciesReportProvider(this,this.morpheus))
+
+
 
     }
 
