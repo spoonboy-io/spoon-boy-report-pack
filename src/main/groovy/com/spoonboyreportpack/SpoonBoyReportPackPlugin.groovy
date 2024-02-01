@@ -33,13 +33,13 @@ class SpoonBoyReportPackPlugin extends Plugin {
 
         // user reports
         // 2FA status
-        this.registerProvider(new User2FAStatusReportProvider(this,this.morpheus))
+        //this.registerProvider(new User2FAStatusReportProvider(this,this.morpheus))
 
         // disabled accounts
-        this.registerProvider(new UserAccountDisabledReportProvider(this,this.morpheus))
+        //this.registerProvider(new UserAccountDisabledReportProvider(this,this.morpheus))
 
         // password expired
-        this.registerProvider(new UserPasswordExpiredReportProvider(this,this.morpheus))
+        //this.registerProvider(new UserPasswordExpiredReportProvider(this,this.morpheus))
 
         // account locked (too many login attempts)
         this.registerProvider(new UserAccountLockedReportProvider(this,this.morpheus))

@@ -74,7 +74,7 @@ class UserAccountLockedReportProvider extends AbstractReportProvider{
 		select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, DATE_FORMAT(u.last_login_date, '%D %M %Y') lastLogin, if(account_locked, 'YES', 'NO') locked from user u inner join account a where a.name = 'Neo' and u.enabled = 1 and a.id = u.account_id and account_locked = 1 order by u.date_created desc;
 		*/
 
-		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingGet();
+		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
         Long displayOrder = 0
         List<GroovyRowResult> repResults = []
 
@@ -86,7 +86,7 @@ class UserAccountLockedReportProvider extends AbstractReportProvider{
             dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
             def accountName = reportResult.getAccount().getName()
 
-            repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, DATE_FORMAT(u.last_login_date, '%D %M %Y') lastLogin, if(account_locked, 'YES', 'NO') locked from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id and account_locked = 1 order by u.date_created desc;")
+            repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, DATE_FORMAT(u.last_login_date, '%D %M %Y') lastLogin, if(account_locked, 'Yes', 'No') locked from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id and account_locked = 1 order by u.date_created desc;")
 
         } finally {
             morpheus.report.releaseDatabaseConnection(dbConnection)
@@ -112,10 +112,10 @@ class UserAccountLockedReportProvider extends AbstractReportProvider{
                     return resultRowRecord
 
                 }.buffer(50).doOnComplete {
-                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
                 }.doOnError { Throwable t ->
-                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
-                }.subscribe {resultRows ->
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
+                }.subscribe() {resultRows ->
                     morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
                 }
 
@@ -135,7 +135,7 @@ class UserAccountLockedReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getDescription() {
-		return "Provides a list of users who have a locked account due to too many failed login attempts"
+		return "Provides a list of users who have a locked account due to inactivity or failed login attempts"
 	}
 
 	/**

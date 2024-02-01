@@ -13,17 +13,17 @@ import com.morpheusdata.views.ViewModel
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import java.sql.Connection
-import io.reactivex.rxjava3.core.Observable
+//import io.reactivex.rxjava3.core.Observable
+import io.reactivex.Observable;
 
-class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
+class UserLoggedInUsersReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
 	protected Plugin plugin
 
-	PolicyEnforcingPoliciesReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
+	UserLoggedInUsersReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
 		this.morpheusContext = morpheusContext
 		this.plugin = plugin
 	}
-
 	/**
 	 * Returns the Morpheus Context for interacting with data stored in the Main Morpheus Application
 	 *
@@ -50,7 +50,7 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCode() {
-		return "spoon-boy-policy-enforcing-policies-report"
+		return "spoon-boy-user-logged-in-users-report"
 	}
 
 	/**
@@ -61,7 +61,7 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getName() {
-		return "Enforcing Policies"
+		return "Currently logged in Users"
 	}
 
 	@Override
@@ -69,14 +69,53 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 		return ServiceResponse.success()
 	}
 
+	/**
+	 * The primary entrypoint for generating a report. This method can be a long running process that queries data in the database
+	 * or from another external source and generates {@link ReportResultRow} objects that can be pushed into the database
+	 *
+	 * <p><strong>Example:</strong></p>
+	 * <pre>{@code
+	 * void process(ReportResult reportResult) {
+	 *      morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingGet();
+	 *      Long displayOrder = 0
+	 *      List<GroovyRowResult> results = []
+	 *      Connection dbConnection
+	 *
+	 *      try {
+	 *          dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
+	 *          if(reportResult.configMap?.phrase) {
+	 *              String phraseMatch = "${reportResult.configMap?.phrase}%"
+	 *              results = new Sql(dbConnection).rows("SELECT id,name,status from instance WHERE name LIKE ${phraseMatch} order by name asc;")
+	 *          } else {
+	 *              results = new Sql(dbConnection).rows("SELECT id,name,status from instance order by name asc;")
+	 *          }
+	 *      } finally {
+	 *          morpheus.report.releaseDatabaseConnection(dbConnection)
+	 *      }
+	 *      log.info("Results: ${results}")
+	 *      Observable<GroovyRowResult> observable = Observable.fromIterable(results) as Observable<GroovyRowResult>
+	 *      observable.map{ resultRow ->
+	 *          log.info("Mapping resultRow ${resultRow}")
+	 *          Map<String,Object> data = [name: resultRow.name, id: resultRow.id, status: resultRow.status]
+	 *          ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
+	 *          log.info("resultRowRecord: ${resultRowRecord.dump()}")
+	 *          return resultRowRecord
+	 *      }.buffer(50).doOnComplete {
+	 *          morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
+	 *      }.doOnError { Throwable t ->
+	 *          morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
+	 *      }.subscribe {resultRows ->
+	 *          morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
+	 *      }
+	 *  }
+	 *}</pre>
+	 *
+	 * @param reportResult the Report result the data is being attached to. Status of the run is updated here, also this object contains filter parameters
+	 *                     that may have been applied based on the {@link ReportProvider#getOptionTypes()}
+	 */
 	@Override
 	void process(ReportResult reportResult) {
 		//TODO: Fill out a report process as described above. NOTE: Use DataServices where able.
-
-		/*
-        SQL for query
-        select p.name policy_name, pt.name policy_type , if(p.enabled, 'YES', 'NO') enabled from policy p inner join policy_type pt inner join account a where a.name = 'neo' and a.id = p.owner_id and p.policy_type_id = pt.id order by p.enabled desc ,pt.name;
-		*/
 	}
 
 	/**
@@ -85,7 +124,7 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getDescription() {
-		return "Provides information on policies which currently enforcing/enabled"
+		return "Provides a list of users who are currently logged in to this Morpheus appliance"
 	}
 
 	/**
@@ -94,7 +133,7 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCategory() {
-		return "role"
+		return "user"
 	}
 
 	/**
@@ -148,6 +187,6 @@ class PolicyEnforcingPoliciesReportProvider extends AbstractReportProvider{
 	HTMLResponse renderTemplate(ReportResult reportResult, Map<String, List<ReportResultRow>> reportRowsBySection) {
 		ViewModel<Map<String, List<ReportResultRow>>> model = new ViewModel<>()
 		model.object = reportRowsBySection
-		getRenderer().renderTemplate("hbs/policyEnforcingPoliciesReport", model)
+		getRenderer().renderTemplate("hbs/userLoggedInStatusReport", model)
 	}
 }

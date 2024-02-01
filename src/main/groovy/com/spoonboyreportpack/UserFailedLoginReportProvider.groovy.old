@@ -13,13 +13,14 @@ import com.morpheusdata.views.ViewModel
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import java.sql.Connection
-import io.reactivex.rxjava3.core.Observable
+//import io.reactivex.rxjava3.core.Observable
+import io.reactivex.Observable;
 
-class RoleAssignedRoleReportProvider extends AbstractReportProvider{
+class UserFailedLoginReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
 	protected Plugin plugin
 
-	RoleAssignedRoleReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
+	UserFailedLoginReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
 		this.morpheusContext = morpheusContext
 		this.plugin = plugin
 	}
@@ -49,7 +50,7 @@ class RoleAssignedRoleReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCode() {
-		return "spoon-boy-role-assigned-role-report"
+		return "spoon-boy-user-failed-login-report"
 	}
 
 	/**
@@ -60,7 +61,7 @@ class RoleAssignedRoleReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getName() {
-		return "Assigned Roles"
+		return "Failed Login Attempts"
 	}
 
 	@Override
@@ -123,7 +124,7 @@ class RoleAssignedRoleReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getDescription() {
-		return "Provides information on how roles have been assigned in this Morpheus appliance"
+		return "Provides information on failed login attempts"
 	}
 
 	/**
@@ -132,7 +133,7 @@ class RoleAssignedRoleReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCategory() {
-		return "role"
+		return "user"
 	}
 
 	/**
@@ -186,6 +187,6 @@ class RoleAssignedRoleReportProvider extends AbstractReportProvider{
 	HTMLResponse renderTemplate(ReportResult reportResult, Map<String, List<ReportResultRow>> reportRowsBySection) {
 		ViewModel<Map<String, List<ReportResultRow>>> model = new ViewModel<>()
 		model.object = reportRowsBySection
-		getRenderer().renderTemplate("hbs/roleAssignedRoleReport", model)
+		getRenderer().renderTemplate("hbs/userFailedLoginReport", model)
 	}
 }
