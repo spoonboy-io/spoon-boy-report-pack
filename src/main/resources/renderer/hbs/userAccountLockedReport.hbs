@@ -1,10 +1,9 @@
 <style>
-    .custom-heading {
-        font-weight:bold!important;
-        margin-bottom:15px;
+    /* report css */
+    th, td {
+        line-height:32px!important;
+        padding-top:5px;
     }
-
-    th, td {line-height:32px!important;padding-top:5px;}
 
     .custom-border-bottom {
         border-bottom: 2px solid #ddd;
@@ -52,19 +51,29 @@
             <th style="width:20%" class="force-center">Account Locked</th>
             </thead>
             <tbody>
-            {{#each main}}
-                <tr>
-                    <td>{{dataMap.username}}</td>
-                    <td><a href="mailto:{{dataMap.email}}">{{dataMap.email}}</a></td>
-                    <td>{{dataMap.created}}</td>
-                    {{#if dataMap.lastLogin}}
-                        <td>{{dataMap.lastLogin}}</td>
-                    {{else}}
-                        <td>None</td>
-                    {{/if}}
-                    <td class="force-center">{{dataMap.locked}}</td>
-                </tr>
-            {{/each}}
+            {{#unless header.0.dataMap.disabledUsers}}
+                    <!-- if no results -->
+                    <tr>
+                        <td colspan="6" class="force-center">
+                            <span>NO DATA</span>
+                        </td>
+                    </tr>
+            {{else}}
+                {{#each main}}
+                    <!-- print results -->
+                    <tr>
+                        <td>{{dataMap.username}}</td>
+                        <td><a href="mailto:{{dataMap.email}}">{{dataMap.email}}</a></td>
+                        <td>{{dataMap.created}}</td>
+                        {{#if dataMap.lastLogin}}
+                            <td>{{dataMap.lastLogin}}</td>
+                        {{else}}
+                            <td>None</td>
+                        {{/if}}
+                        <td class="force-center">{{dataMap.locked}}</td>
+                    </tr>
+                {{/each}}
+            {{/unless}}
             </tbody>
         </table>
     </div>

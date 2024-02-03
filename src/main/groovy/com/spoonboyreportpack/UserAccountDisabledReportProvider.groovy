@@ -13,8 +13,7 @@ import com.morpheusdata.views.ViewModel
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import java.sql.Connection
-//import io.reactivex.rxjava3.core.Observable
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable
 
 class UserAccountDisabledReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
@@ -72,11 +71,7 @@ class UserAccountDisabledReportProvider extends AbstractReportProvider{
 	@Override
 	void process(ReportResult reportResult) {
 
-		/*
-		 select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, DATE_FORMAT(u.last_login_date, '%D %M %Y') lastLogin, if(enabled, 'NO', 'YES') disabled from user u inner join account a where a.name = 'Neo' and u.enabled = 1 and a.id = u.account_id order by u.date_created desc;
-		*/
-
-		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingGet();
+		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
         Long displayOrder = 0
         List<GroovyRowResult> repResults = []
 
@@ -114,9 +109,9 @@ class UserAccountDisabledReportProvider extends AbstractReportProvider{
                     return resultRowRecord
 
                 }.buffer(50).doOnComplete {
-                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
                 }.doOnError { Throwable t ->
-                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
                 }.subscribe {resultRows ->
                     morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
                 }

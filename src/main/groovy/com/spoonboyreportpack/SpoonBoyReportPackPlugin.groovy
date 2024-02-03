@@ -36,7 +36,7 @@ class SpoonBoyReportPackPlugin extends Plugin {
         //this.registerProvider(new User2FAStatusReportProvider(this,this.morpheus))
 
         // disabled accounts
-        //this.registerProvider(new UserAccountDisabledReportProvider(this,this.morpheus))
+        this.registerProvider(new UserAccountDisabledReportProvider(this,this.morpheus))
 
         // password expired
         //this.registerProvider(new UserPasswordExpiredReportProvider(this,this.morpheus))
