@@ -39,7 +39,7 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.registerProvider(new UserAccountDisabledReportProvider(this,this.morpheus))
 
         // password expired
-        //this.registerProvider(new UserPasswordExpiredReportProvider(this,this.morpheus))
+        this.registerProvider(new UserPasswordExpiredReportProvider(this,this.morpheus))
 
         // account locked (too many login attempts)
         this.registerProvider(new UserAccountLockedReportProvider(this,this.morpheus))
