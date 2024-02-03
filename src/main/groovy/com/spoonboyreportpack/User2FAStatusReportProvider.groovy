@@ -13,8 +13,7 @@ import com.morpheusdata.views.ViewModel
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import java.sql.Connection
-//import io.reactivex.rxjava3.core.Observable
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable
 
 class User2FAStatusReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
@@ -72,7 +71,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	@Override
 	void process(ReportResult reportResult) {
 
-        morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingGet();
+        morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
         Long displayOrder = 0
         List<GroovyRowResult> repResults = []
 
@@ -117,9 +116,9 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
         			return resultRowRecord
 
         		}.buffer(50).doOnComplete {
-        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
+        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
         		}.doOnError { Throwable t ->
-        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
+        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
         		}.subscribe {resultRows ->
         			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
         		}
@@ -142,7 +141,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getDescription() {
-		return "Provides information on the two factor authentication status of users of this appliance"
+		return "Provides information on the two factor authentication status of enabled users of this appliance"
 	}
 
 	/**

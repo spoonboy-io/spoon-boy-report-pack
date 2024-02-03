@@ -1,35 +1,39 @@
 <style>
-    .custom-heading {
-        font-weight:bold!important;
-        margin-bottom:15px;
-    }
-    .custom-footer {
-        font-weight:bold;
+    /* report css */
+    th, td {
+        line-height:32px!important;
+        padding-top:5px;
     }
 
-    .custom-label {
-        font-size: 1rem;
-    }
     .custom-border-bottom {
-        border-bottom: 1px solid #999999;
+        border-bottom: 2px solid #ddd;
     }
 
-    th, td {line-height:32px!important;padding-top:5px;}
+    #spoonboy-report h2 {
+        border-bottom: 1px solid #ddd;
+        margin: 10px 0 20px;
+        padding: 0 0 5px;
+    }
+
+    .force-center {
+        text-align:center!important;
+    }
 </style>
 
 <div id="spoonboy-report">
 
     <div id="report-header">
         <div class="break-container intro-stats">
+        <h2>Summary</h2>
             <div class="count-stats">
 
                 <div class="stats-container">
-	                <span class="big-stat">
-                        {{header.0.dataMap.users}}
+                	<span class="big-stat">
+                         {{header.0.dataMap.users}}
                     </span>
                     <span class="stat-label">
-		                Users
-	                </span>
+                        Users
+                    </span>
                 </div>
 
                 <div class="stats-container">
@@ -37,17 +41,17 @@
                         {{header.0.dataMap.yes2FA}}
                     </span>
                     <span class="stat-label">
-		                2FA Enabled
-	                </span>
+                        2FA Enabled
+                    </span>
                 </div>
 
                 <div class="stats-container">
-	                <span class="big-stat">
-                        £{{header.0.dataMap.no2FA}}
-	                </span>
+                    <span class="big-stat">
+                        {{header.0.dataMap.no2FA}}
+                    </span>
                     <span class="stat-label">
-		                2FA Disabled
-	                </span>
+                        2FA Not Enabled
+                    </span>
                 </div>
 
             </div>
@@ -55,22 +59,24 @@
     </div>
 
     <div id="report-main">
+        <h2>Accounts</h2>
         <table class="table table-striped custom-border-bottom">
             <thead>
-            <th class="custom-heading" style="width:10%">Username</th>
-            <th class="custom-heading" style="width:10%">Email Address</th>
-            <th class="custom-heading" style="width:25%">Account Created</th>
-            <th class="custom-heading" style="width:10%">2FA Enabled</th>
+            <th style="width:20%">Username</th>
+            <th style="width:20%">Email Address</th>
+            <th style="width:20%">Account Created</th>
+            <th style="width:20%" class="force-center">2FA Enabled</th>
             </thead>
             <tbody>
-            {{#each main}}
-                <tr>
-                    <td>{{dataMap.username}}</td>
-                    <td><a href="mailto:{{dataMap.email}}">{{dataMap.email}}</a></td>
-                    <td>{{dataMap.created}}</td>
-                    <td>{{dataMap.is2FA}}</td>
-                </tr>
-            {{/each}}
+                {{#each main}}
+                    <!-- print results -->
+                    <tr>
+                        <td>{{dataMap.username}}</td>
+                        <td><a href="mailto:{{dataMap.email}}">{{dataMap.email}}</a></td>
+                        <td>{{dataMap.created}}</td>
+                        <td class="force-center">{{dataMap.is2fa}}</td>
+                    </tr>
+                {{/each}}
             </tbody>
         </table>
     </div>
