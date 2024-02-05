@@ -48,7 +48,7 @@ class SpoonBoyReportPackPlugin extends Plugin {
         //this.registerProvider(new UserVMCredentialsStatusReportProvider(this,this.morpheus))
 
         // failed logins
-        //this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
+        this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
 
         // logged in users
         //this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))

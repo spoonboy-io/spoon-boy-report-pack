@@ -1,13 +1,63 @@
-spoonBoyReportPackReport.hbs<table>
-	<thead>
-	<th>Header</th>
-	
-	</thead>
-	<tbody>
-		{{#each main}}
-			<tr>
-				<td>{{dataMap.column}}</td>
-			</tr>
-		{{/each}}
-	</tbody>
-</table>
+<style>
+    /* report css */
+    th, td {
+        line-height:32px!important;
+        padding-top:5px;
+    }
+
+    .custom-border-bottom {
+        border-bottom: 2px solid #ddd;
+    }
+
+    #spoonboy-report h2 {
+        border-bottom: 1px solid #ddd;
+        margin: 10px 0 20px;
+        padding: 0 0 5px;
+    }
+
+    .force-center {
+        text-align:center!important;
+    }
+</style>
+
+<div id="spoonboy-report">
+
+    <div id="report-main">
+        <h2>Accounts</h2>
+        <table class="table table-striped custom-border-bottom">
+            <thead>
+            <th style="width:20%">Username</th>
+            <th style="width:20%">Email Address</th>
+            <th style="width:20%">Account Created</th>
+            <th style="width:20%">Last Login</th>
+            <th style="width:20%" class="force-center">Login Attempts</th>
+            </thead>
+            <tbody>
+            {{#unless main}}
+                <!-- if no results -->
+                <tr>
+                    <td colspan="6" class="force-center">
+                        <span>NO DATA</span>
+                    </td>
+                </tr>
+            {{else}}
+                {{#each main}}
+                    <!-- print results -->
+                    <tr>
+                        <td>{{dataMap.username}}</td>
+                        <td><a href="mailto:{{dataMap.email}}">{{dataMap.email}}</a></td>
+                        <td>{{dataMap.created}}</td>
+                        {{#if dataMap.lastLogin}}
+                            <td>{{dataMap.lastLogin}}</td>
+                        {{else}}
+                            <td>None</td>
+                        {{/if}}
+                        <td class="force-center">{{dataMap.failedLoginAttempts}}</td>
+                    </tr>
+                {{/each}}
+            {{/unless}}
+            </tbody>
+        </table>
+    </div>
+
+</div>
