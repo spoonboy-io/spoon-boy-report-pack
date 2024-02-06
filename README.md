@@ -12,9 +12,10 @@ This report pack is built for the post v1.0 plugin framework so requires Morpheu
 - Account Locked Report
 - Account Disabled Report
 - Password Expired Report
-- VM Credential Status Report (WIP, SQL in provider)
+- Failed Login Attempts Report
 - Logged in Users Report (WIP, SQL in the provider)
-- Failed Login Report (WIP)
+- VM Credential Status Report (WIP, SQL in provider)
+
 
 ### Role Reports
 
