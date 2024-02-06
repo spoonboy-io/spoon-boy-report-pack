@@ -1,6 +1,6 @@
 ## Spoon Boy Report Pack
 
-WIP see issues
+WIP
 
 A suite of additional reports for Morpheus designed to address several real-world use cases.
 
