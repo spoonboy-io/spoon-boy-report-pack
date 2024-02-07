@@ -75,28 +75,13 @@ class UserLoggedInUsersReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	void process(ReportResult reportResult) {
-		//TODO
-
-
-		/*
-			select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'login#process'
-    and user_id is not NULL group by user_id) as login inner join (select user_id, max(al.date_created) as out_date from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id) as logout
-        on login.user_id = logout.user_id where in_date > out_date
-
-union(
-    select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'login#process' and user_id is not NULL group by user_id) as login where  login.user_id not in (select user_id from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id)
-
-);
-
-		 */
 
 		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
 		Long displayOrder = 0
 		List<GroovyRowResult> repResults = []
 
-		Integer users = 0
-		Integer no2FA = 0
-		Integer yes2FA = 0
+		Integer loggedInUsers = 0
+
 
 		Connection dbConnection
 
@@ -104,7 +89,7 @@ union(
 			dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
 			def accountName = reportResult.getAccount().getName()
 
-			repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, if(is_using2fa, 'YES', 'NO') 'is2fa' from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id order by is_using2fa desc, u.date_created desc;")
+			repResults = new Sql(dbConnection).rows("select d.user_id, u.username username, u.email email, DATE_FORMAT(d.in_date,'%H:%i, %D %M %Y') inDate, d.session_mins sessionMins from (select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'login#process' and user_id is not NULL group by user_id) as login inner join (select user_id, max(al.date_created) as out_date from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id) as logout on login.user_id = logout.user_id where in_date > out_date union (select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'login#process' and user_id is not NULL group by user_id) as login where  login.user_id not in (select user_id from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id))) d inner join user u where d.user_id = u.id order by session_mins desc;")
 
 		} finally {
 			morpheus.report.releaseDatabaseConnection(dbConnection)
@@ -118,18 +103,12 @@ union(
 			data = [
 					username: resultRow.username,
 					email: resultRow.email,
-					created : resultRow.created,
-					is2fa: resultRow.is2fa,
+					loginTimeDate : resultRow.inDate,
+					sessionMins: resultRow.sessionMins,
 			]
 
 			// create summary metrics
-			users ++
-
-			if (resultRow.is2fa == "YES") {
-				yes2FA++
-			} else {
-				no2FA++
-			}
+			loggedInUsers ++
 
 			ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
 			return resultRowRecord
@@ -144,15 +123,11 @@ union(
 
 		// prep header
 		Map<String,Object> headerData = [
-				users: users,
-				yes2FA: yes2FA,
-				no2FA: no2FA
+				loggedInUsers: loggedInUsers
 		]
 
 		ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
 		morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
-
-
 
 	}
 
@@ -162,7 +137,7 @@ union(
 	 */
 	@Override
 	String getDescription() {
-		return "Provides a list of users who are currently logged in to this Morpheus appliance"
+		return "Provides a list of users who are currently logged in"
 	}
 
 	/**

@@ -51,7 +51,7 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
 
         // logged in users
-        //this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
+        this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
 
 
         // role reports
