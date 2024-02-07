@@ -13,8 +13,7 @@ import com.morpheusdata.views.ViewModel
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import java.sql.Connection
-//import io.reactivex.rxjava3.core.Observable
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable
 
 class UserLoggedInUsersReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
@@ -69,53 +68,92 @@ class UserLoggedInUsersReportProvider extends AbstractReportProvider{
 		return ServiceResponse.success()
 	}
 
-	/**
-	 * The primary entrypoint for generating a report. This method can be a long running process that queries data in the database
-	 * or from another external source and generates {@link ReportResultRow} objects that can be pushed into the database
-	 *
-	 * <p><strong>Example:</strong></p>
-	 * <pre>{@code
-	 * void process(ReportResult reportResult) {
-	 *      morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingGet();
-	 *      Long displayOrder = 0
-	 *      List<GroovyRowResult> results = []
-	 *      Connection dbConnection
-	 *
-	 *      try {
-	 *          dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
-	 *          if(reportResult.configMap?.phrase) {
-	 *              String phraseMatch = "${reportResult.configMap?.phrase}%"
-	 *              results = new Sql(dbConnection).rows("SELECT id,name,status from instance WHERE name LIKE ${phraseMatch} order by name asc;")
-	 *          } else {
-	 *              results = new Sql(dbConnection).rows("SELECT id,name,status from instance order by name asc;")
-	 *          }
-	 *      } finally {
-	 *          morpheus.report.releaseDatabaseConnection(dbConnection)
-	 *      }
-	 *      log.info("Results: ${results}")
-	 *      Observable<GroovyRowResult> observable = Observable.fromIterable(results) as Observable<GroovyRowResult>
-	 *      observable.map{ resultRow ->
-	 *          log.info("Mapping resultRow ${resultRow}")
-	 *          Map<String,Object> data = [name: resultRow.name, id: resultRow.id, status: resultRow.status]
-	 *          ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
-	 *          log.info("resultRowRecord: ${resultRowRecord.dump()}")
-	 *          return resultRowRecord
-	 *      }.buffer(50).doOnComplete {
-	 *          morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingGet();
-	 *      }.doOnError { Throwable t ->
-	 *          morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingGet();
-	 *      }.subscribe {resultRows ->
-	 *          morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
-	 *      }
-	 *  }
-	 *}</pre>
+	/*
 	 *
 	 * @param reportResult the Report result the data is being attached to. Status of the run is updated here, also this object contains filter parameters
 	 *                     that may have been applied based on the {@link ReportProvider#getOptionTypes()}
 	 */
 	@Override
 	void process(ReportResult reportResult) {
-		//TODO: Fill out a report process as described above. NOTE: Use DataServices where able.
+		//TODO
+
+
+		/*
+			select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'login#process'
+    and user_id is not NULL group by user_id) as login inner join (select user_id, max(al.date_created) as out_date from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id) as logout
+        on login.user_id = logout.user_id where in_date > out_date
+
+union(
+    select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'login#process' and user_id is not NULL group by user_id) as login where  login.user_id not in (select user_id from audit_log al inner join account where account.name ="Neo" and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id)
+
+);
+
+		 */
+
+		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
+		Long displayOrder = 0
+		List<GroovyRowResult> repResults = []
+
+		Integer users = 0
+		Integer no2FA = 0
+		Integer yes2FA = 0
+
+		Connection dbConnection
+
+		try {
+			dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
+			def accountName = reportResult.getAccount().getName()
+
+			repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, if(is_using2fa, 'YES', 'NO') 'is2fa' from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id order by is_using2fa desc, u.date_created desc;")
+
+		} finally {
+			morpheus.report.releaseDatabaseConnection(dbConnection)
+		}
+
+		Observable<GroovyRowResult> observable = Observable.fromIterable(repResults) as Observable<GroovyRowResult>
+		observable.map{ resultRow ->
+
+			def Map<String,Object> data = [:]
+
+			data = [
+					username: resultRow.username,
+					email: resultRow.email,
+					created : resultRow.created,
+					is2fa: resultRow.is2fa,
+			]
+
+			// create summary metrics
+			users ++
+
+			if (resultRow.is2fa == "YES") {
+				yes2FA++
+			} else {
+				no2FA++
+			}
+
+			ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
+			return resultRowRecord
+
+		}.buffer(50).doOnComplete {
+			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
+		}.doOnError { Throwable t ->
+			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
+		}.subscribe {resultRows ->
+			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
+		}
+
+		// prep header
+		Map<String,Object> headerData = [
+				users: users,
+				yes2FA: yes2FA,
+				no2FA: no2FA
+		]
+
+		ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
+		morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
+
+
+
 	}
 
 	/**
