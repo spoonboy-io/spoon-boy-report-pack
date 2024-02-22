@@ -1,0 +1,94 @@
+<style>
+    /* report css */
+    th, td {
+        line-height:32px!important;
+        padding-top:5px;
+    }
+
+    .custom-border-bottom {
+        border-bottom: 2px solid #ddd;
+    }
+
+    #spoonboy-report h2 {
+        border-bottom: 1px solid #ddd;
+        margin: 10px 0 20px;
+        padding: 0 0 5px;
+    }
+
+    .force-center {
+        text-align:center!important;
+    }
+</style>
+
+<div id="spoonboy-report">
+
+    <div id="report-header">
+        <div class="break-container intro-stats">
+        <h2>Summary</h2>
+            <div class="count-stats">
+
+                <div class="stats-container">
+	                <span class="big-stat">
+                        {{header.0.dataMap.agentsInstalled}}
+                    </span>
+                    <span class="stat-label">
+		                Installed Agents
+	                </span>
+                </div>
+
+                <div class="stats-container">
+	                <span class="big-stat">
+                        {{header.0.dataMap.agentVersions}}
+                    </span>
+                    <span class="stat-label">
+		                Agent Versions
+	                </span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="report-main">
+        <h2>Morpheus Agents</h2>
+        <table class="table table-striped custom-border-bottom">
+            <thead>
+            <th style="width:15%">Name</th>
+            <th style="width:8%">Power State</th>
+            <th style="width:8%">OS Type</th>
+            <th style="width:8%">Platform</th>
+            <th style="width:8%">Platform Version</th>
+            <th style="width:15%">Created</th>
+            <th style="width:15%">Last Updated</th>
+            <th style="width:8%">Agent Version</th>
+            <th style="width:15%">Agent Updated</th>
+            </thead>
+            <tbody>
+            {{#unless header.0.dataMap.agentsInstalled}}
+                    <!-- if no results -->
+                    <tr>
+                        <td colspan="9" class="force-center">
+                            <span>NO DATA</span>
+                        </td>
+                    </tr>
+            {{else}}
+                {{#each main}}
+                    <!-- print results -->
+                    <tr>
+                        <td>{{dataMap.name}}</td>
+                        <td>{{dataMap.powerState}}</td>
+                        <td>{{dataMap.osType}}</td>
+                        <td>{{dataMap.platform}}</td>
+                        <td>{{dataMap.platformVersion}}</td>
+                        <td>{{dataMap.dateCreated}}</td>
+                        <td>{{dataMap.lastUpdated}}</td>
+                        <td>{{dataMap.agentVersion}}</td>
+                        <td>{{dataMap.agentLastUpdated}}</td>
+                    </tr>
+                {{/each}}
+            {{/unless}}
+            </tbody>
+        </table>
+    </div>
+
+</div>

@@ -15,11 +15,11 @@ import groovy.sql.Sql
 import java.sql.Connection
 import io.reactivex.rxjava3.core.Observable
 
-class User2FAStatusReportProvider extends AbstractReportProvider{
+class UserLoggedInUsersApplianceReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
 	protected Plugin plugin
 
-	User2FAStatusReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
+	UserLoggedInUsersReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
 		this.morpheusContext = morpheusContext
 		this.plugin = plugin
 	}
@@ -49,7 +49,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCode() {
-		return "spoon-boy-user-2fa-status-report"
+		return "spoon-boy-user-logged-in-users-report"
 	}
 
 	/**
@@ -60,7 +60,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getName() {
-		return "2FA status of Users"
+		return "Currently logged in Users"
 	}
 
 	@Override
@@ -68,70 +68,66 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 		return ServiceResponse.success()
 	}
 
+	/*
+	 *
+	 * @param reportResult the Report result the data is being attached to. Status of the run is updated here, also this object contains filter parameters
+	 *                     that may have been applied based on the {@link ReportProvider#getOptionTypes()}
+	 */
 	@Override
 	void process(ReportResult reportResult) {
 
-        morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
-        Long displayOrder = 0
-        List<GroovyRowResult> repResults = []
+		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
+		Long displayOrder = 0
+		List<GroovyRowResult> repResults = []
 
-        Integer users = 0
-        Integer no2FA = 0
-        Integer yes2FA = 0
+		Integer loggedInUsers = 0
 
-        Connection dbConnection
 
-        try {
-            dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
-        	def accountName = reportResult.getAccount().getName()
+		Connection dbConnection
 
-        	repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, if(is_using2fa, 'YES', 'NO') 'is2fa' from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id order by is_using2fa desc, u.date_created desc;")
+		try {
+			dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
+			def accountName = reportResult.getAccount().getName()
 
-        } finally {
-            morpheus.report.releaseDatabaseConnection(dbConnection)
-        }
+			repResults = new Sql(dbConnection).rows("select d.user_id, u.username username, u.email email, DATE_FORMAT(d.in_date,'%H:%i, %D %M %Y') inDate, d.session_mins sessionMins from (select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'login#process' and user_id is not NULL group by user_id) as login inner join (select user_id, max(al.date_created) as out_date from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id) as logout on login.user_id = logout.user_id where in_date > out_date union (select login.user_id, in_date, TIMESTAMPDIFF(MINUTE, in_date, now()) as session_mins from (select user_id, max(al.date_created) as in_date from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'login#process' and user_id is not NULL group by user_id) as login where  login.user_id not in (select user_id from audit_log al inner join account where account.name = '" + accountName + "' and user_id = account.id and event_type = 'logout#index' and user_id is not NULL group by user_id))) d inner join user u where d.user_id = u.id order by session_mins desc;")
 
-        Observable<GroovyRowResult> observable = Observable.fromIterable(repResults) as Observable<GroovyRowResult>
-        		observable.map{ resultRow ->
+		} finally {
+			morpheus.report.releaseDatabaseConnection(dbConnection)
+		}
 
-        		    def Map<String,Object> data = [:]
+		Observable<GroovyRowResult> observable = Observable.fromIterable(repResults) as Observable<GroovyRowResult>
+		observable.map{ resultRow ->
 
-        			data = [
-        			        username: resultRow.username,
-        			        email: resultRow.email,
-        					created : resultRow.created,
-        					is2fa: resultRow.is2fa,
-        			]
+			def Map<String,Object> data = [:]
 
-                    // create summary metrics
-        			users ++
+			data = [
+					username: resultRow.username,
+					email: resultRow.email,
+					loginTimeDate : resultRow.inDate,
+					sessionMins: resultRow.sessionMins,
+			]
 
-        			if (resultRow.is2fa == "YES") {
-        			    yes2FA++
-        			} else {
-        			    no2FA++
-        			}
+			// create summary metrics
+			loggedInUsers ++
 
-        			ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
-        			return resultRowRecord
+			ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
+			return resultRowRecord
 
-        		}.buffer(50).doOnComplete {
-        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
-        		}.doOnError { Throwable t ->
-        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
-        		}.subscribe {resultRows ->
-        			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
-        		}
+		}.buffer(50).doOnComplete {
+			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
+		}.doOnError { Throwable t ->
+			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
+		}.subscribe {resultRows ->
+			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
+		}
 
-        // prep header
-        Map<String,Object> headerData = [
-            users: users,
-            yes2FA: yes2FA,
-            no2FA: no2FA
-        ]
+		// prep header
+		Map<String,Object> headerData = [
+				loggedInUsers: loggedInUsers
+		]
 
-        ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
-        morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
+		ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
+		morpheus.report.appendResultRows(reportResult,[resultRowRecord]).blockingGet()
 
 	}
 
@@ -141,7 +137,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getDescription() {
-		return "Provides information on the two factor authentication status of enabled users"
+		return "Provides a list of users who are currently logged in"
 	}
 
 	/**
@@ -194,7 +190,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 * <pre>{@code
 	 *    ViewModel model = new ViewModel()
 	 * 	  model.object = reportRowsBySection
-	 * 	  getRenderer().renderTemplate("hbs/instanceReport", model)
+	 * 	  getRendereqr().renderTemplate("hbs/instanceReport", model)
 	 *}</pre>
 	 * @param reportResult the results of a report
 	 * @param reportRowsBySection the individual row results by section (i.e. header, vs. data)
@@ -204,6 +200,6 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	HTMLResponse renderTemplate(ReportResult reportResult, Map<String, List<ReportResultRow>> reportRowsBySection) {
 		ViewModel<Map<String, List<ReportResultRow>>> model = new ViewModel<>()
 		model.object = reportRowsBySection
-		getRenderer().renderTemplate("hbs/user2FAStatusReport", model)
+		getRenderer().renderTemplate("hbs/userLoggedInStatusReport", model)
 	}
 }

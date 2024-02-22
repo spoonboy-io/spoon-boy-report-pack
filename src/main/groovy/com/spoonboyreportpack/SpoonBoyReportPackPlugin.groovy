@@ -28,7 +28,7 @@ class SpoonBoyReportPackPlugin extends Plugin {
     @Override
     void initialize() {
         this.setName("Spoon Boy Report Pack")
-        this.setDescription("A suite of additional reports for Morpheus designed to address several real-world use cases")
+        this.setDescription("A suite of additional reports for Morpheus")
         this.setAuthor("Ollie Phillips")
 
         // user reports
@@ -51,7 +51,8 @@ class SpoonBoyReportPackPlugin extends Plugin {
         this.registerProvider(new UserFailedLoginReportProvider(this,this.morpheus))
 
         // logged in users
-        this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus))
+        this.registerProvider(new UserLoggedInUsersReportProvider(this,this.morpheus)) //tenant
+        //this.registerProvider(new UserLoggedInUsersApplianceReportProvider(this,this.morpheus)) //master only (appliance wide)
 
 
         // role reports
@@ -63,7 +64,9 @@ class SpoonBoyReportPackPlugin extends Plugin {
         // enforcing policies
         //this.registerProvider(new PolicyEnforcingPoliciesReportProvider(this,this.morpheus))
 
-
+        // provisioning inventory
+        // Morpheus Agent installed versions
+        this.registerProvider(new ProvisioningInventoryMorpheusAgentInstalledVersionReportProvider(this,this.morpheus))
 
     }
 

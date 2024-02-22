@@ -1,22 +1,43 @@
 ## Spoon Boy Report Pack
 
-WIP
-
 A suite of additional reports for Morpheus designed to address several real-world use cases.
 
 This report pack is built for the post v1.0 plugin framework so requires Morpheus version later than 6.3.0.
 
 ### User Reports
 
-- 2FA Status Report
-- Account Locked Report
-- Account Disabled Report
-- Password Expired Report
-- Failed Login Attempts Report
-- Logged in Users Report (Tenant)
+#### 2FA Status Report
+
+![2FAStatusOfUsersReport.png](samples%2F2FAStatusOfUsersReport.png)
+
+#### Account Locked Report
+
+![accountLockedReport.png](samples%2FaccountLockedReport.png)
+
+#### Account Disabled Report
+
+![disabledUserAccountsReport.png](samples%2FdisabledUserAccountsReport.png)
+
+#### Password Expired Report
+
+![passwordExpiredReport.png](samples%2FpasswordExpiredReport.png)
+
+#### Failed Login Attempts Report
+
+![failedLoginAttemptsReport.png](samples%2FfailedLoginAttemptsReport.png)
+
+#### Logged in Users Report (Tenant)
+
+![currentlyLoggedInUsersReportTenant.png](samples%2FcurrentlyLoggedInUsersReportTenant.png)
+
 - Logged in Users Report (Appliance, master tenant only) - WIP
 - VM Credential Status Report (WIP, SQL in provider)
 
+### Provisioning Inventory Reports
+
+#### Morpheus Agent Installed Version Report
+
+![morpheusAgentInstalledVersionReport.png](samples%2FmorpheusAgentInstalledVersionReport.png)
 
 ### Role Reports
 

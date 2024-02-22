@@ -15,11 +15,11 @@ import groovy.sql.Sql
 import java.sql.Connection
 import io.reactivex.rxjava3.core.Observable
 
-class User2FAStatusReportProvider extends AbstractReportProvider{
+class ProvisioningInventoryMorpheusAgentInstalledVersionReportProvider extends AbstractReportProvider{
 	protected MorpheusContext morpheusContext
 	protected Plugin plugin
 
-	User2FAStatusReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
+	ProvisioningInventoryMorpheusAgentInstalledVersionReportProvider(Plugin plugin, MorpheusContext morpheusContext) {
 		this.morpheusContext = morpheusContext
 		this.plugin = plugin
 	}
@@ -49,7 +49,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCode() {
-		return "spoon-boy-user-2fa-status-report"
+		return "spoon-boy-provisioning-inventory-morpheus-agent-installed-version-report"
 	}
 
 	/**
@@ -60,7 +60,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getName() {
-		return "2FA status of Users"
+		return "Morpheus Agent Installed Version"
 	}
 
 	@Override
@@ -71,63 +71,69 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	@Override
 	void process(ReportResult reportResult) {
 
-        morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
+		/*
+		SELECT cs.name, concat(upper(substring(cs.power_state,1,1)), lower(substring(cs.power_state,2))) power_state, concat(upper(substring(cs.os_type,1,1)), lower(substring(cs.os_type,2))) os_type, concat(upper(substring(cs.platform,1,1)), lower(substring(cs.platform,2))) platform, cs.platform_version, DATE_FORMAT(cs.date_created,'%D %M %Y') date_created , DATE_FORMAT(cs.last_updated,'%D %M %Y') last_updated, cs.agent_version, DATE_FORMAT(cs.last_agent_update,'%D %M %Y') last_agent_update from compute_server cs inner join account a where cs.agent_installed = true and cs.account_id = a.id and a.name="Neo" order by cs.name ;
+		 */
+
+		morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.generating).blockingAwait();
         Long displayOrder = 0
         List<GroovyRowResult> repResults = []
 
-        Integer users = 0
-        Integer no2FA = 0
-        Integer yes2FA = 0
+        Integer agentsInstalled = 0
+		Integer agentVersions = 0
+		Object versionList = [:]
 
         Connection dbConnection
 
         try {
             dbConnection = morpheus.report.getReadOnlyDatabaseConnection().blockingGet()
-        	def accountName = reportResult.getAccount().getName()
+            def accountName = reportResult.getAccount().getName()
 
-        	repResults = new Sql(dbConnection).rows("select username, email, DATE_FORMAT(u.date_created,'%D %M %Y') created, if(is_using2fa, 'YES', 'NO') 'is2fa' from user u inner join account a where a.name = '" + accountName + "' and u.enabled = 1 and a.id = u.account_id order by is_using2fa desc, u.date_created desc;")
+			repResults = new Sql(dbConnection).rows("SELECT cs.name vm_name, concat(upper(substring(cs.power_state,1,1)), lower(substring(cs.power_state,2))) power_state, concat(upper(substring(cs.os_type,1,1)), lower(substring(cs.os_type,2))) os_type, concat(upper(substring(cs.platform,1,1)), lower(substring(cs.platform,2))) platform, cs.platform_version platform_version, DATE_FORMAT(cs.date_created,'%D %M %Y') date_created , DATE_FORMAT(cs.last_updated,'%D %M %Y') last_updated, cs.agent_version agent_version, DATE_FORMAT(cs.last_agent_update,'%D %M %Y') last_agent_update from compute_server cs inner join account a where cs.agent_installed = true and cs.account_id = a.id and a.name = '" + accountName + "' order by cs.name;")
 
         } finally {
             morpheus.report.releaseDatabaseConnection(dbConnection)
         }
 
         Observable<GroovyRowResult> observable = Observable.fromIterable(repResults) as Observable<GroovyRowResult>
-        		observable.map{ resultRow ->
+                observable.map{ resultRow ->
 
-        		    def Map<String,Object> data = [:]
+                    def Map<String,Object> data = [:]
 
-        			data = [
-        			        username: resultRow.username,
-        			        email: resultRow.email,
-        					created : resultRow.created,
-        					is2fa: resultRow.is2fa,
-        			]
+                    data = [
+                            name: resultRow.vm_name,
+                            powerState: resultRow.power_state,
+                            osType : resultRow.os_type,
+                            platform: resultRow.platform,
+                            platformVersion : resultRow.platform_version,
+							dateCreated: resultRow.date_created,
+							lastUpdated: resultRow.last_updated,
+							agentVersion: resultRow.agent_version,
+							agentLastUpdated: resultRow.last_agent_update
+                    ]
 
                     // create summary metrics
-        			users ++
+                    agentsInstalled ++
+					// using a dict key to get a unique list of versions, which we'll count later
+					versionList[data["agentVersion"]] = 1
 
-        			if (resultRow.is2fa == "YES") {
-        			    yes2FA++
-        			} else {
-        			    no2FA++
-        			}
+                    ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
+                    return resultRowRecord
 
-        			ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_MAIN, displayOrder: displayOrder++, dataMap: data)
-        			return resultRowRecord
+                }.buffer(50).doOnComplete {
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
+                }.doOnError { Throwable t ->
+                    morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
+                }.subscribe {resultRows ->
+                    morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
+                }
 
-        		}.buffer(50).doOnComplete {
-        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.ready).blockingAwait();
-        		}.doOnError { Throwable t ->
-        			morpheus.report.updateReportResultStatus(reportResult,ReportResult.Status.failed).blockingAwait();
-        		}.subscribe {resultRows ->
-        			morpheus.report.appendResultRows(reportResult,resultRows).blockingGet()
-        		}
+        // prep header data
+		agentVersions = versionList.values().size()
 
-        // prep header
         Map<String,Object> headerData = [
-            users: users,
-            yes2FA: yes2FA,
-            no2FA: no2FA
+            agentsInstalled: agentsInstalled,
+			agentVersions: agentVersions
         ]
 
         ReportResultRow resultRowRecord = new ReportResultRow(section: ReportResultRow.SECTION_HEADER, displayOrder: displayOrder++, dataMap: headerData)
@@ -141,7 +147,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getDescription() {
-		return "Provides information on the two factor authentication status of enabled users"
+		return "Provides information on installed Morpheus agents (version and last updated date) by virtual machine"
 	}
 
 	/**
@@ -150,7 +156,7 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	 */
 	@Override
 	String getCategory() {
-		return "user"
+		return "provisioningInventory"
 	}
 
 	/**
@@ -204,6 +210,6 @@ class User2FAStatusReportProvider extends AbstractReportProvider{
 	HTMLResponse renderTemplate(ReportResult reportResult, Map<String, List<ReportResultRow>> reportRowsBySection) {
 		ViewModel<Map<String, List<ReportResultRow>>> model = new ViewModel<>()
 		model.object = reportRowsBySection
-		getRenderer().renderTemplate("hbs/user2FAStatusReport", model)
+		getRenderer().renderTemplate("hbs/provisioningInventoryMorpheusAgentInstalledVersionReport", model)
 	}
 }
